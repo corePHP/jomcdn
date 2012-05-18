@@ -508,7 +508,10 @@ class plgSystemJomCDN extends JPlugin
 			$buffer = str_replace( $patterns, $replacements, $buffer );
 		}
 		$buffer = str_replace( '/http', 'http', $buffer );
-		$buffer = str_replace( substr( JURI::root(), 0, -1 ) . $cdn_domain, $cdn_domain, $buffer );
+		if ( $cdn_domain ) {
+			$buffer = str_replace( substr( JURI::root(), 0, -1 ) . $cdn_domain, $cdn_domain,
+				$buffer );
+		}
 
 		JResponse::setBody( $buffer );
 	}
