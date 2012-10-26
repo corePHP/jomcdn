@@ -103,7 +103,7 @@ class plgSystemJomCDN extends JPlugin
 	 *
 	 * @var array
 	 **/
-	public $stylesheet_files_extensions = array( 'htc', 'css' );
+	public $stylesheet_files_extensions = array( 'htc', 'css', 'woff', 'ttf', 'svg' );
 
 	/**
 	 * The extensions for script tags to replace
@@ -291,10 +291,11 @@ class plgSystemJomCDN extends JPlugin
 		$this->_db               = JFactory::getDBO();
 		$this->_cache            = JCache::getInstance();
 		$uri                     = JFactory::getURI();
-		$this->_cache->setLifeTime( $this->params->get( 'cache_life_time', 172800 ) ); // 2 days
 		$this->page_request_hash = md5( $uri->toString() . implode( ',', $_GET ) );
 		$run_s3                  = isset(
 			$_REQUEST[trim( $this->params->get( 'cron_url', 'cdn_run_cron' ) )] );
+		$this->_cache->setCaching(true);
+		$this->_cache->setLifeTime( $this->params->get( 'cache_life_time', 172800 ) ); // 2 days
 
 		// If S3 cron job parameter is set then run through the caches
 		if ( $run_s3 ) {
