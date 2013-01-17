@@ -1781,6 +1781,9 @@ class RACKSPACE_CDN extends CDN_HELER
 		if ( is_file( $local_file ) ) {
 			$asset->load_from_filename( $local_file );
 		} else {
+			if ( !$local_file ) {
+				return false;
+			}
 			$asset->write( $local_file, strlen( $local_file ) );
 		}
 
