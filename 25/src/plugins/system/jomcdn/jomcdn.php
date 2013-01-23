@@ -103,7 +103,8 @@ class plgSystemJomCDN extends JPlugin
 	 *
 	 * @var array
 	 **/
-	public $stylesheet_files_extensions = array( 'htc', 'css', 'woff', 'ttf', 'svg' );
+	public $stylesheet_files_extensions = array( 'htc', 'css', 'woff', 'otf', 'eot', 'ttf',
+		'svg' );
 
 	/**
 	 * The extensions for script tags to replace
@@ -244,7 +245,7 @@ class plgSystemJomCDN extends JPlugin
 			FROM #__jomcdn_config
 				WHERE `name` = 'db_version'";
 		$this->_db->setQuery( $query );
-		$db_version = (int) $this->_db->loadResult( $result );
+		$db_version = (int) $this->_db->loadResult();
 		$new_version = $db_version;
 
 		if ( $db_version < 1001 ) {
@@ -1092,16 +1093,16 @@ class plgSystemJomCDN extends JPlugin
 	 */
 	function get_cached_files( $all = false )
 	{
-		// This is a binary value of the cache
-		$this->cache_request = '';
-		foreach ( str_split( $this->_cache_request ) as $value ) {
-			$this->cache_request .= str_pad( decbin( ord( $value ) ), 8, 0, STR_PAD_LEFT );
-		}
-
 		// Get all cached files
 		$query = "SELECT *
 			FROM #__jomcdn_files";
 		if ( false === $all ) {
+			// This is a binary value of the cache
+			$this->cache_request = '';
+			foreach ( str_split( $this->_cache_request ) as $value ) {
+				$this->cache_request .= str_pad( decbin( ord( $value ) ), 8, 0, STR_PAD_LEFT );
+			}
+
 			$query .= " WHERE ( `page` | b'{$this->cache_request}' ) = `page`";
 		}
 		$this->_db->setQuery( $query );
@@ -1280,7 +1281,7 @@ class plgSystemJomCDN extends JPlugin
 		$url = 'http://www.smushit.com/ysmush.it/ws.php?img=' . urlencode( $_original_url );
 
 		$options = array(
-			'timeout'    => 5
+			'timeout'    => 60
 		);
 
 		$http = new Http();
@@ -1289,7 +1290,10 @@ class plgSystemJomCDN extends JPlugin
 		$http->execute( $url );
 
 		if ( $http->error ) {
-			return $http->error;
+			if ( CDN_DEBUG ) {
+				echo 'Smush it error: ' . $http->error;
+			}
+			return false;
 		}
 
 		if ( 200 != $http->status ) {
@@ -1498,14 +1502,14 @@ class S3_CDN extends CDN_HELER
 
 		// If is file
 		if ( is_file( $local_file ) ) {
-			if ( $headers['do_minify'] ) {
+			if ( @$headers['do_minify'] ) {
 				$local_file = JFile::read( $local_file );
 			} else {
 				$input = $this->s3->inputFile( $local_file );
 			}
 		}
 		if ( null == $input && is_string( $local_file ) ) { // If is content
-			if ( $headers['do_minify'] ) {
+			if ( @$headers['do_minify'] ) {
 				switch ( $headers['do_minify'] ) {
 					case 'jsmin':
 						$local_file = CPP_JSMin::minify( $local_file );
