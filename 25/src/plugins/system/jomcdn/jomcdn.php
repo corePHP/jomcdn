@@ -103,7 +103,8 @@ class plgSystemJomCDN extends JPlugin
 	 *
 	 * @var array
 	 **/
-	public $stylesheet_files_extensions = array( 'htc', 'css', 'woff', 'ttf', 'svg' );
+	public $stylesheet_files_extensions = array( 'htc', 'css', 'woff', 'otf', 'eot', 'ttf',
+		'svg' );
 
 	/**
 	 * The extensions for script tags to replace
@@ -1280,7 +1281,7 @@ class plgSystemJomCDN extends JPlugin
 		$url = 'http://www.smushit.com/ysmush.it/ws.php?img=' . urlencode( $_original_url );
 
 		$options = array(
-			'timeout'    => 5
+			'timeout'    => 60
 		);
 
 		$http = new Http();
@@ -1289,7 +1290,10 @@ class plgSystemJomCDN extends JPlugin
 		$http->execute( $url );
 
 		if ( $http->error ) {
-			return $http->error;
+			if ( CDN_DEBUG ) {
+				echo 'Smush it error: ' . $http->error;
+			}
+			return false;
 		}
 
 		if ( 200 != $http->status ) {
@@ -1498,14 +1502,14 @@ class S3_CDN extends CDN_HELER
 
 		// If is file
 		if ( is_file( $local_file ) ) {
-			if ( $headers['do_minify'] ) {
+			if ( @$headers['do_minify'] ) {
 				$local_file = JFile::read( $local_file );
 			} else {
 				$input = $this->s3->inputFile( $local_file );
 			}
 		}
 		if ( null == $input && is_string( $local_file ) ) { // If is content
-			if ( $headers['do_minify'] ) {
+			if ( @$headers['do_minify'] ) {
 				switch ( $headers['do_minify'] ) {
 					case 'jsmin':
 						$local_file = CPP_JSMin::minify( $local_file );
