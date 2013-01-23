@@ -244,7 +244,7 @@ class plgSystemJomCDN extends JPlugin
 			FROM #__jomcdn_config
 				WHERE `name` = 'db_version'";
 		$this->_db->setQuery( $query );
-		$db_version = (int) $this->_db->loadResult( $result );
+		$db_version = (int) $this->_db->loadResult();
 		$new_version = $db_version;
 
 		if ( $db_version < 1001 ) {
@@ -1092,16 +1092,16 @@ class plgSystemJomCDN extends JPlugin
 	 */
 	function get_cached_files( $all = false )
 	{
-		// This is a binary value of the cache
-		$this->cache_request = '';
-		foreach ( str_split( $this->_cache_request ) as $value ) {
-			$this->cache_request .= str_pad( decbin( ord( $value ) ), 8, 0, STR_PAD_LEFT );
-		}
-
 		// Get all cached files
 		$query = "SELECT *
 			FROM #__jomcdn_files";
 		if ( false === $all ) {
+			// This is a binary value of the cache
+			$this->cache_request = '';
+			foreach ( str_split( $this->_cache_request ) as $value ) {
+				$this->cache_request .= str_pad( decbin( ord( $value ) ), 8, 0, STR_PAD_LEFT );
+			}
+
 			$query .= " WHERE ( `page` | b'{$this->cache_request}' ) = `page`";
 		}
 		$this->_db->setQuery( $query );
