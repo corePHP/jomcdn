@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<install version="1.5" type="plugin" group="system" method="upgrade">
+<extension version="1.6" type="plugin" group="system" method="upgrade">
 	<name>System - jomCDN</name>
 	<author>'corePHP'</author>
 	<creationDate>July 2010</creationDate>
@@ -88,4 +88,4 @@
 		<field name="execution_time" type="text" default="3600" label="Script execution time" description="Page execution time limit for when running the cronjob. (in seconds). Change this if the cron job is not executing the whole way." />
 		<field name="memory_limit" type="text" default="512M" label="Memory limit" description="This is the memory limit for the server when running the cronjob. Change this if the cron job is not executing the whole way." />
 	</fieldset></fields></config>
-</install>
+</extension>
