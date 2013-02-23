@@ -191,8 +191,9 @@ class plgSystemJomCDN extends JPlugin
 	{
 		$query = "DESCRIBE #__jomcdn";
 		$this->_db->setQuery( $query );
-
-		if ( !$this->_db->loadResult() ) {
+		try {
+			$this->_db->loadResult();
+		} catch ( Exception $e ) {
 			$query = "CREATE TABLE IF NOT EXISTS `#__jomcdn` (
 			  `id` int(11) NOT NULL auto_increment,
 			  `cache` varchar(32) NOT NULL COMMENT 'The cache id',
@@ -222,8 +223,9 @@ class plgSystemJomCDN extends JPlugin
 
 		$query = "DESCRIBE #__jomcdn_config";
 		$this->_db->setQuery( $query );
-
-		if ( !$this->_db->loadResult() ) {
+		try {
+			$this->_db->loadResult();
+		} catch ( Exception $e ) {
 			$query = "
 			CREATE TABLE IF NOT EXISTS `#__jomcdn_config` (
 			  `name` varchar(255) NOT NULL,
@@ -290,7 +292,7 @@ class plgSystemJomCDN extends JPlugin
 
 		// Set class variables
 		$this->_db               = JFactory::getDBO();
-		$this->_cache            = JCache::getInstance();
+		$this->_cache            = JCache::getInstance('output', array( 'storage' => 'file' ));
 		$uri                     = JFactory::getURI();
 		$this->page_request_hash = md5( $uri->toString() . implode( ',', $_GET ) );
 		$run_s3                  = isset(
@@ -333,7 +335,10 @@ class plgSystemJomCDN extends JPlugin
 			// &&
 			!$this->cache_exists( $this->page_request_hash )
 		) {
-			$this->store_this_page();
+			// If we return false here due to exception then let's not continue
+			if ( !$this->store_this_page() ) {
+				return false;
+			}
 		}
 
 		// Replace all cached files before page is sent to browser
@@ -354,7 +359,13 @@ class plgSystemJomCDN extends JPlugin
 			FROM #__jomcdn
 				WHERE `cache` = " . $this->_db->Quote( $cache_id );
 		$this->_db->setQuery( $query );
-		if ( $this->_db->loadResult() ) {
+		try {
+			$result = $this->_db->loadResult();
+		} catch( Exception $e ) {
+			$result = false;
+		}
+
+		if ( $result ) {
 			return true;
 		} else {
 			return false;
@@ -376,7 +387,12 @@ class plgSystemJomCDN extends JPlugin
 			( `cache`, `request`, `expires` )
 				VALUES ( '{$this->page_request_hash}', '{$this->_cache_request}', '{$expires}' )";
 		$this->_db->setQuery( $query );
-		$this->_db->query();
+
+		try {
+			return $this->_db->query();
+		} catch ( Exception $e ) {
+			return false;
+		}
 	}
 
 	/**
@@ -404,8 +420,8 @@ class plgSystemJomCDN extends JPlugin
 		ini_set( 'memory_limit', $this->memory_limit );
 
 		// Require minify classes
-		require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'jsmin.php' );
-		require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'cssmin.php' );
+		require_once( dirname( __FILE__ ) .'/'. $this->_name . '/jsmin.php' );
+		require_once( dirname( __FILE__ ) .'/'. $this->_name . '/cssmin.php' );
 
 		if ( $this->params->get( 'cron_delete_cache_files', 0 ) ) {
 			// Delete all cached files
@@ -593,12 +609,12 @@ class plgSystemJomCDN extends JPlugin
 
 		if ( $this->params->get( 'smushit_please', 0 ) ) {
 			if ( !function_exists( 'json_encode' ) ) {
-				require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'JSON' .DS. 'JSON.php' );
+				require_once( dirname( __FILE__ ) .'/'. $this->_name . '/JSON/JSON.php' );
 			}
-			require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'http' .DS. 'class.http.php' );
+			require_once( dirname( __FILE__ ) .'/'. $this->_name . '/http/class.http.php' );
 
 			foreach ( $images as $file => $path ) {
-				$url = JURI::root() . str_replace( JPATH_ROOT . DS, '', $path );
+				$url = JURI::root() . str_replace( JPATH_ROOT . '/', '', $path );
 
 				if ( CDN_DEBUG ) {
 					myPrint( "Smushing: {$url}..." );
@@ -800,13 +816,11 @@ class plgSystemJomCDN extends JPlugin
 			// Smush smush
 			if ( $smushable && $this->params->get( 'smushit_please', 0 ) ) {
 				if ( !function_exists( 'json_encode' ) ) {
-					require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'JSON' .DS.
-						'JSON.php' );
+					require_once( dirname( __FILE__ ) .'/'. $this->_name . '/JSON/JSON.php' );
 				}
-				require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'http' .DS.
-				 	'class.http.php' );
+				require_once( dirname( __FILE__ ) .'/'. $this->_name . '/http/class.http.php' );
 
-				$url = JURI::root() . str_replace( JPATH_ROOT . DS, '', $file_path );
+				$url = JURI::root() . str_replace( JPATH_ROOT . '/', '', $file_path );
 
 				if ( CDN_DEBUG ) {
 					myPrint( "Smushing: {$url}..." );
@@ -985,11 +999,11 @@ class plgSystemJomCDN extends JPlugin
 			}
 
 			// Get absolute path
-			$_file = ltrim( str_replace( array( '/', '\\' ), DS, $file ), DS );
-			if ( substr( $file, 0, 1 ) == DS ) {
-				$_file = realpath( JPATH_ROOT .DS. $_file );
+			$_file = ltrim( str_replace( array( '/', '\\' ), '/', $file ), '/' );
+			if ( substr( $file, 0, 1 ) == '/' ) {
+				$_file = realpath( JPATH_ROOT .'/'. $_file );
 			} else {
-				$_file = realpath( $root_path .DS. $_file );
+				$_file = realpath( $root_path .'/'. $_file );
 			}
 
 			// Test with the path that was passed to function
@@ -998,13 +1012,13 @@ class plgSystemJomCDN extends JPlugin
 				$brute_force = $this->params->get( 'brute_force_file_path', 1 );
 
 				// Attempt to bruteforce path if it is available as setting
-				$_file = ltrim( str_replace( array( '/', '\\' ), DS, $file ), DS );
-				$_file = realpath( JPATH_ROOT .DS. $_file );
+				$_file = ltrim( str_replace( array( '/', '\\' ), '/', $file ), '/' );
+				$_file = realpath( JPATH_ROOT .'/'. $_file );
 
 				if ( !$brute_force || !file_exists( $_file ) || !is_readable( $_file ) ) {
 
-					$_file = ltrim( str_replace( array( '/', '\\' ), DS, $file ), DS );
-					$_file = realpath( $this->cache_abs_path .DS. $_file );
+					$_file = ltrim( str_replace( array( '/', '\\' ), '/', $file ), '/' );
+					$_file = realpath( $this->cache_abs_path .'/'. $_file );
 
 					if ( !$brute_force || !file_exists( $_file ) || !is_readable( $_file ) ) {
 						// unset( $files[$k] );
@@ -1360,8 +1374,8 @@ class plgSystemJomCDN extends JPlugin
 		}
 
 		// Get unique filename before store!
-		$temp = rtrim( $app->getCfg( 'tmp_path' ), '/' . DS );
-		$temp_file = $temp .DS. basename( $_original_url );
+		$temp = rtrim( $app->getCfg( 'tmp_path' ), '/' );
+		$temp_file = $temp .'/'. basename( $_original_url );
 		$counter = 1;
 		while ( file_exists( $temp_file ) ) {
 			$pieces = count( explode( '.', $temp_file ) );
@@ -1455,7 +1469,7 @@ class S3_CDN extends CDN_HELER
 		}
 
 		if ( defined( 'CDN_CRON_RUNNING' ) && CDN_CRON_RUNNING ) {
-			require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 's3.php' );
+			require_once( dirname( __FILE__ ) .'/'. $this->_name . '/s3.php' );
 
 			$this->s3 = new CPP_S3( $s3_access_key, $s3_secret_key, $s3_use_ssl );
 		}
@@ -1560,7 +1574,7 @@ class S3_CDN extends CDN_HELER
 			$gz_cdn_file = str_replace(
 				strrchr( $cdn_file, '.' ), '.gz' . strrchr( $cdn_file, '.' ), $cdn_file );
 			$gz_cdn_file_path
-				= str_replace( DS, '/', str_replace( JPATH_ROOT . DS, '', $gz_cdn_file ) );
+				= str_replace( JPATH_ROOT . '/', '', $gz_cdn_file );
 
 			// Set the enconding header
 			$headers['Content-Encoding'] = 'gzip';
@@ -1584,7 +1598,7 @@ class S3_CDN extends CDN_HELER
 			unset( $headers['Content-Encoding'] );
 		}
 
-		$cdn_file_path = str_replace( DS, '/', str_replace( JPATH_ROOT . DS, '', $cdn_file ) );
+		$cdn_file_path = str_replace( JPATH_ROOT . '/', '', $cdn_file );
 
 		$put = $this->s3->putObject(
 			$input,
@@ -1698,11 +1712,11 @@ class RACKSPACE_CDN extends CDN_HELER
 		}
 
 		if ( defined( 'CDN_CRON_RUNNING' ) && CDN_CRON_RUNNING ) {
-			$path = dirname( __FILE__ ) .DS. $this->_name .DS. 'rackspace-php-cloudfiles'
-				.DS. 'cloudfiles.php';
+			$path = dirname( __FILE__ ) .'/'. $this->_name
+				. '/rackspace-php-cloudfiles/cloudfiles.php';
 			if ( $this->params->get( 'rs_account_is_uk', 0 ) ) {
-				$path = dirname( __FILE__ ) .DS. $this->_name .DS. 'rackspace-php-cloudfiles'
-					.DS. 'cloudfiles-uk.php';
+				$path = dirname( __FILE__ ) .'/'. $this->_name
+					. '/rackspace-php-cloudfiles/cloudfiles-uk.php';
 			}
 			require_once $path;
 
@@ -1776,7 +1790,7 @@ class RACKSPACE_CDN extends CDN_HELER
 			}
 		}
 
-		$cdn_file_path = str_replace( DS, '/', str_replace( JPATH_ROOT . DS, '', $cdn_file ) );
+		$cdn_file_path = str_replace( JPATH_ROOT . '/', '', $cdn_file );
 
 		$asset = $this->rs->create_object( $cdn_file_path );
 		$asset->content_type = $content_type;
