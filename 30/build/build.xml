@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="jomCDN" default="build" basedir="./src">
-	<property name="joomla_version" value="2.5" />
+	<property name="joomla_version" value="3.0" />
 	<property name="plugin.name" value="jomcdn" />
 	<property name="plugin.path" value="plugins/system/${plugin.name}" />
 	<property name="plugin.language.path" value="administrator/language" />

@@ -299,6 +299,7 @@ class plgSystemJomCDN extends JPlugin
 			$_REQUEST[trim( $this->params->get( 'cron_url', 'cdn_run_cron' ) )] );
 		$this->_cache->setCaching(true);
 		$this->_cache->setLifeTime( $this->params->get( 'cache_life_time', 172800 ) ); // 2 days
+		$this->jinput            = JFactory::getApplication()->input;
 
 		// If S3 cron job parameter is set then run through the caches
 		if ( $run_s3 ) {
@@ -320,10 +321,10 @@ class plgSystemJomCDN extends JPlugin
 
 		// Get the unique cache request string for this page
 		$component = str_pad( str_replace(
-			'com_', '', JRequest::getVar( 'component', 'component' ) ), 2, '0', STR_PAD_LEFT );
-		$view      = str_pad( JRequest::getVar( 'view', 'view' ), 2, '0', STR_PAD_LEFT );
-		$layout    = str_pad( JRequest::getVar( 'layout', 'default' ), 2, '0', STR_PAD_LEFT );
-		$id        = str_pad( JRequest::getVar( 'id', '00' ), 2, '0', STR_PAD_LEFT );
+			'com_', '', $this->jinput->get( 'component', 'component' ) ), 2, '0', STR_PAD_LEFT );
+		$view      = str_pad( $this->jinput->get( 'view', 'view' ), 2, '0', STR_PAD_LEFT );
+		$layout    = str_pad( $this->jinput->get( 'layout', 'default' ), 2, '0', STR_PAD_LEFT );
+		$id        = str_pad( $this->jinput->get( 'id', '00' ), 2, '0', STR_PAD_LEFT );
 
 		$this->_cache_request = substr( $component, 0, 2 )
 			. substr( $view, 0, 2 )
