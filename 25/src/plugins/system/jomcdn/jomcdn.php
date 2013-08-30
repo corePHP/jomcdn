@@ -266,6 +266,50 @@ class plgSystemJomCDN extends JPlugin
 		}
 	}
 
+	function onAfterRoute()
+	{
+		$cdn = $this->get_cdn_object();
+		$this->_pass = $cdn->_pass;
+
+		// Return if current page is an administrator page
+		if (JFactory::getApplication()->isAdmin())
+		{
+
+			return;
+		}
+
+		// Include the Helper
+		require_once JPATH_PLUGINS . '/' . $this->_type . '/' . $this->_name . '/jomcdn/maxcdn/helper.php';
+		$class = 'MAXCDNHelper';
+		$this->helper = new $class ($cdn->params);
+
+		// Return if page should be protected
+		// Return on edit pages
+
+		if ($this->helper->isProtectedPage('jomcdn', 1) || $this->helper->isEditPage())
+		{
+			$this->_pass = 0;
+
+			return;
+		}
+	}
+
+	function onContentPrepare($context, &$article)
+	{
+		if ($this->_pass)
+		{
+			$this->helper->onContentPrepare($article, $context);
+		}
+	}
+
+	function onAfterDispatch()
+	{
+		if ($this->_pass)
+		{
+			$this->helper->onAfterDispatch();
+		}
+	}
+
 	/**
 	 * This function starts the whole CDN deal
 	 *
@@ -338,6 +382,11 @@ class plgSystemJomCDN extends JPlugin
 
 		// Replace all cached files before page is sent to browser
 		$this->replace_files();
+
+		if ($this->_pass)
+		{
+			$this->helper->onAfterRender();
+		}
 
 		return true;
 	}
@@ -1079,6 +1128,11 @@ class plgSystemJomCDN extends JPlugin
 				return new RACKSPACE_CDN(
 					$rs_api_key, $rs_username, $rs_bucket, get_object_vars( $this )
 				);
+			case 'maxcdn':
+
+				return new MAXCDN(
+					get_object_vars($this)
+				);
 			default:
 				return;
 				break;
@@ -1410,6 +1464,190 @@ class plgSystemJomCDN extends JPlugin
 	    $bytes /= pow( 1024, $pow );
 
 	    return round( $bytes, $precision ) . ' ' . $units[$pow];
+	}
+}
+
+
+/**
+ * Class for creating connection with Maxcdn
+ */
+
+class MAXCDN extends CDN_HELER
+{
+	/**
+	 * Constructor -- Creates instance of MAXCDN connection
+	 *
+	 * @param   array  $config  holds information about plugin parameters
+	 */
+	function __construct( $config = array() )
+	{
+		foreach ( $config as $key => $value )
+		{
+			$this->$key = $value;
+		}
+
+		$this->_pass = 0;
+		jimport('joomla.filesystem.file');
+
+		// Load the admin language file
+		$lang = JFactory::getLanguage();
+
+		if ($lang->getTag() != 'en-GB')
+		{
+			// Loads English language file as fallback (for undefined stuff in other language file)
+			$lang->load('plg_' . $this->_type . '_' . $this->_name, JPATH_ADMINISTRATOR, 'en-GB');
+		}
+
+		$lang->load('plg_' . $this->_type . '_' . $this->_name, JPATH_ADMINISTRATOR, null, 1);
+
+		// Return if current page is an administrator page
+		if (JFactory::getApplication()->isAdmin())
+		{
+			return;
+		}
+
+		$this->_pass = 1;
+		$params = $this->getPluginParams($this->_name, $this->_type, $this->params);
+		$this->params = $params;
+
+	}
+
+	/**
+	 * Fetch Plugin parameters
+	 *
+	 * @param   string  $name    Name of Plugin
+	 * @param   string  $type    Type of Plugin
+	 * @param   string  $params  Plugin params Object
+	 *
+	 * @return Object         Object of Plugin parameters
+	 */
+	function getPluginParams($name, $type = 'system', $params = '')
+	{
+		if (empty($params))
+		{
+			$plugin = JPluginHelper::getPlugin($type, $name);
+			$params = (is_object($plugin) && isset($plugin->params)) ? $plugin->params : null;
+		}
+		return $this->getParams($params, JPATH_PLUGINS . '/' . $type . '/' . $name . '/' . $name . '.xml');
+	}
+
+	/**
+	 * Fetch Plugin parameters from xml file
+	 *
+	 * @param   string  $params  Plugin params Object
+	 * @param   string  $path    Path to plugin xml
+	 *
+	 * @return Object         Object of Plugin parameters
+	 */
+	function getParams($params, $path = '')
+	{
+		$xml = $this->_getXML($path);
+
+		if (!$params)
+		{
+			return (object) $xml;
+		}
+
+		if (!is_object($params))
+		{
+			$registry = new JRegistry;
+			$registry->loadString($params);
+			$params = $registry->toObject();
+		}
+		elseif (method_exists($params, 'toObject'))
+		{
+			$params = $params->toObject();
+		}
+
+		if (!$params)
+		{
+			return (object) $xml;
+		}
+
+		if (!empty($xml))
+		{
+			foreach ($xml as $key => $val)
+			{
+				if (!isset($params->$key) || $params->$key == '')
+				{
+					$params->$key = $val;
+				}
+			}
+		}
+
+		return $params;
+	}
+
+	/**
+	 * Get Plugin xml file
+	 *
+	 * @param   string  $path  Path to plugin xml
+	 *
+	 * @return string         plugin XML
+	 */
+	function _getXML($path)
+	{
+
+		if (!isset($this->_xml[$path]))
+		{
+			$this->_xml[$path] = $this->_loadXML($path);
+		}
+
+		return $this->_xml[$path];
+	}
+
+	/**
+	 * Load Plugin xml file
+	 *
+	 * @param   string  $path  Path to plugin xml
+	 *
+	 * @return string         plugin XML
+	 */
+	function _loadXML($path)
+	{
+		$xml = array();
+		jimport('joomla.filesystem.file');
+
+		if (!$path || !JFile::exists($path))
+		{
+			return $xml;
+		}
+
+		$file = JFile::read($path);
+
+		if (!$file)
+		{
+			return $xml;
+		}
+
+		$xml_parser = xml_parser_create();
+		xml_parse_into_struct($xml_parser, $file, $fields);
+		xml_parser_free($xml_parser);
+
+		foreach ($fields as $field)
+		{
+			if ($field['tag'] != 'FIELD'
+				|| !isset($field['attributes'])
+				|| !isset($field['attributes']['DEFAULT'])
+				|| !isset($field['attributes']['NAME'])
+				|| $field['attributes']['NAME'] == ''
+				|| $field['attributes']['NAME']['0'] == '@'
+				|| !isset($field['attributes']['TYPE'])
+				|| $field['attributes']['TYPE'] == 'spacer'
+			)
+			{
+				continue;
+			}
+
+			if ($field['attributes']['TYPE'] == 'textarea')
+			{
+				$field['attributes']['DEFAULT'] = str_replace('<br />', "\n", $field['attributes']['DEFAULT']);
+			}
+
+			$xml[$field['attributes']['NAME']] = $field['attributes']['DEFAULT'];
+		}
+
+		return $xml;
 	}
 }
 
