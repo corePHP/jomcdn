@@ -23,6 +23,10 @@ class JFormFieldservice extends JFormField
 	public $type = 'service';
 	protected function getInput()
 	{
+		if($this->value=="")
+		{
+			$this->value = "s3";
+		}
 		$session = JFactory::getSession();
 		$session->set('serviceType', $this->value);
 		$serviceType = $session->get('serviceType');
