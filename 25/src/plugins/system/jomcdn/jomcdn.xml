@@ -13,6 +13,7 @@
 	<files>
 		<filename plugin="jomcdn">jomcdn.php</filename>
 		<folder>jomcdn</folder>
+		<folder>fields</folder>
 	</files>
 
 	<languages folder="language">
@@ -20,11 +21,8 @@
 		<language tag="en-GB">en-GB/en-GB.plg_system_jomcdn.sys.ini</language>
 	</languages>
 
-	<config><fields name="params"><fieldset name="basic">
-		<field name="cdn_type" type="list" default="s3" label="CDN Service to use" description="Select the CDN service that you will be using.">
-			<option value="s3">Amazon S3 with CloudFront</option>
-			<option value="rs">Rackspace Cloud Files</option>
-		</field>
+	<config addfieldpath="plugins/system/jomcdn/fields"><fields name="params"><fieldset name="basic">
+		<field name="cdn_type" type="service"  label="CDN Service to use" />
 
 		<field name="@spacer" type="spacer" default="======= Amazon CDN Configuration =======" label="" />
 		<field name="s3_access_key" type="password" default="" label="Amazon access key" description="Your Amazon S3 access key, you can retrieve this from 'Security Credentials' under the 'Your Account' page in amazon." />
@@ -43,6 +41,58 @@
 		<field name="rs_account_is_uk" type="list" default="0" label="Account type" description="Account location.">
 			<option value="0">US</option>
 			<option value="1">UK</option>
+		</field>
+		<field name="@spacer" type="spacer" default="======= MAXCDN Configuration =======" label="" />
+		<field name="root"
+			   type="text"
+			   size="60"
+			   default="/"
+			   label="JOMCDN_MAXCDN_SITE_ROOT"
+			   description="JOMCDN_MAXCDN_SITE_ROOT_DESC" />
+		<field name="cdn"
+			   type="text"
+			   size="60"
+			   default=""
+			   label="JOMCDN_MAXCDN_DOMAIN"
+			   description="JOMCDN_MAXCDN_DOMAIN_DESC" />
+		<field name="filetypes"
+			   type="maxcdnfiletypes"
+			   newlines="1"
+			   showcheckall='1'
+			   default="*"
+			   label="JOMCDN_MAXCDN_FILE_TYPES"
+			   description="JOMCDN_MAXCDN_FILE_TYPES_DESC">
+			<option>CDN_IMAGES</option>
+			<option value="bmp">bmp</option>
+			<option value="gif">gif</option>
+			<option value="jpg-jpeg">jpg / jpeg</option>
+			<option value="ico">ico</option>
+			<option value="png">png</option>
+			<option value="tif-tiff">tif / tiff</option>
+			<option>CDN_DOCUMENTS</option>
+			<option value="doc-docx">doc / docx</option>
+			<option value="odt">odt</option>
+			<option value="pdf">pdf</option>
+			<option value="rtf">rtf</option>
+			<option value="txt">txt</option>
+			<option>CDN_WEB_FILES</option>
+			<option value="css">css</option>
+			<option value="js">js</option>
+		</field>
+		<field name="extratypes" type="text" size="60" default="" label="JOMCDN_MAXCDN_EXTRA_FILETYPES" description="JOMCDN_MAXCDN_EXTRA_FILETYPES_DESC" />
+		<field name="ignorefiles"
+			   type="textarea"
+			   cols="40"
+			   rows="5"
+			   default=""
+			   label="JOMCDN_MAXCDN_IGNORE_FILES"
+			   description="JOMCDN_MAXCDN_IGNORE_FILES_DESC" />
+		<field name="enable_in_scripts"
+			   type="radio" class="btn-group"
+			   default="1" label="JOMCDN_MAXCDN_ENABLE_IN_SCRIPTS"
+			   description="JOMCDN_MAXCDN_ENABLE_IN_SCRIPTS_DESC">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
 		</field>
 	</fieldset></fields></config>
 
