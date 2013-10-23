@@ -329,7 +329,11 @@ class plgSystemJomCDN extends JPlugin
 		if ( !$app->isSite() ) {
 			return true;
 		}
-
+		if ($this->_pass)
+		{
+			$this->helper->onAfterRender();
+			return;
+		}
 		jimport( 'joomla.cache.cache' );
 
 		// Set class variables
@@ -382,11 +386,6 @@ class plgSystemJomCDN extends JPlugin
 
 		// Replace all cached files before page is sent to browser
 		$this->replace_files();
-
-		if ($this->_pass)
-		{
-			$this->helper->onAfterRender();
-		}
 
 		return true;
 	}
@@ -534,6 +533,11 @@ class plgSystemJomCDN extends JPlugin
 		$add_expiration_time = $this->params->get( 'add_expiration_time', 0 );
 
 		$cdn        = $this->get_cdn_object();
+		if($cdn->_pass == 1)
+		{
+			$this->_pass = $cdn->_pass;
+			return;
+		}
 		$cdn_domain = $cdn->get_domain();
 
 		$patterns = array();
