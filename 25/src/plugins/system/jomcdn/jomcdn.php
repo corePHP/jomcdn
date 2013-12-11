@@ -146,7 +146,7 @@ class plgSystemJomCDN extends JPlugin
 
 	/**
 	 * Zip file extensions
-	 * 
+	 *
 	 * @var array
 	 **/
 	static $zip_extensions = array( '7z', 'deb', 'gz', 'pkg', 'rar', 'sit', 'sitx', 'zip', 'zipx' );
@@ -268,29 +268,31 @@ class plgSystemJomCDN extends JPlugin
 
 	function onAfterRoute()
 	{
-		$cdn = $this->get_cdn_object();
-		$this->_pass = $cdn->_pass;
+		if( $this->params->get( 'cdn_type' ) === 'maxcdn'  ) {
+			$cdn = $this->get_cdn_object();
+			$this->_pass = $cdn->_pass;
 
-		// Return if current page is an administrator page
-		if (JFactory::getApplication()->isAdmin())
-		{
+			// Return if current page is an administrator page
+			if (JFactory::getApplication()->isAdmin())
+			{
 
-			return;
-		}
+				return;
+			}
 
-		// Include the Helper
-		require_once JPATH_PLUGINS . '/' . $this->_type . '/' . $this->_name . '/jomcdn/maxcdn/helper.php';
-		$class = 'MAXCDNHelper';
-		$this->helper = new $class ($cdn->params);
+			// Include the Helper
+			require_once JPATH_PLUGINS . '/' . $this->_type . '/' . $this->_name . '/jomcdn/maxcdn/helper.php';
+			$class = 'MAXCDNHelper';
+			$this->helper = new $class ($cdn->params);
 
-		// Return if page should be protected
-		// Return on edit pages
+			// Return if page should be protected
+			// Return on edit pages
 
-		if ($this->helper->isProtectedPage('jomcdn', 1) || $this->helper->isEditPage())
-		{
-			$this->_pass = 0;
+			if ($this->helper->isProtectedPage('jomcdn', 1) || $this->helper->isEditPage())
+			{
+				$this->_pass = 0;
 
-			return;
+				return;
+			}
 		}
 	}
 
