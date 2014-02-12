@@ -142,7 +142,7 @@ class plgSystemJomCDN extends JPlugin
 	 * @var array
 	 **/
 	static $video_extensions = array( '3g2', '3gp', 'asf', 'asx', 'avi', 'flv', 'mov', 'mp4', 'mpg',
-	 	'rm', 'swf', 'wmv' );
+   		'rm', 'swf', 'wmv', 'm4v', 'ogv', 'webm');
 
 	/**
 	 * Zip file extensions
