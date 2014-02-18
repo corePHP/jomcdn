@@ -780,6 +780,13 @@ class plgSystemJomCDN extends JPlugin
 		}
 
 		$data = array_merge( @$urls1[1], @$urls2[1] );
+		// Fixing issue with ? urls
+		foreach( $data as $key => $d ) {
+			$d_exploded = explode( '?', $d );
+			if( $d_exploded[1] ) {
+				$data[$key] = $d_exploded[0];
+			}
+		}
 		$urls = $this->clean_media_files(
 			$data,
 			array_merge( $this->image_extensions, $this->stylesheet_files_extensions ),
