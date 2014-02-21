@@ -133,7 +133,8 @@
 
 		<field name="@spacer" type="spacer" default="======== Extra File Types ========" label="" />
 		<field name="cache_extra_filetypes" type="textarea" default="dmg,864000|exe,864000" cols="30" rows="5" label="Extra extensions" description="Here you can add custom file extensions to the CDN. This must be in the following format (without the double quotes): &#34;dmg,864000|exe,864000&#34;, where the value before the comma is the extension and the value after is the time for the file to be cached is seconds, extensions must be separated by a pipe character &#34;|&#34;." />
-
+		<field name="cache_ignore_files" type="textarea" default="" cols="30" rows="5" label="Ignore File Upload" description="Here you can add custom file extensions to be ignored by Rackspace or Amazon CDN. Must have file extension separated by a comma (.woff,.ttf,.txt)" />
+		
 		<field name="@spacer" type="spacer" default="======== Server Level Parameters ========" label="" />
 		<field name="execution_time" type="text" default="3600" label="Script execution time" description="Page execution time limit for when running the cronjob. (in seconds). Change this if the cron job is not executing the whole way." />
 		<field name="memory_limit" type="text" default="512M" label="Memory limit" description="This is the memory limit for the server when running the cronjob. Change this if the cron job is not executing the whole way." />
