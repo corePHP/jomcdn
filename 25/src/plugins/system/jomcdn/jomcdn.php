@@ -1191,7 +1191,17 @@ class plgSystemJomCDN extends JPlugin
 	 * @return mixed False if unsucessful, The path to the CDN file if sucessful
 	 */
 	function add_file( $original_file, $absolute_path, $cdn_file = '', $content_type = null )
-	{
+	{	
+		// Lets check to see if we are ignoring any files
+		if( $cache_ignore_files = $this->params->get( 'cache_ignore_files' ) ) {
+			$ignore_files = explode( ',', $cache_ignore_files );
+			foreach( $ignore_files as $key => $ignore ) {
+				if ( false !== strpos($original_file, $ignore) ) {
+					return false;
+				}
+			}
+		}
+		
 		// Lets double check that this is a file by searching for the extension
 		if ( false === strpos( $original_file, '.' ) ) {
 			return false;
