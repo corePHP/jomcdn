@@ -108,7 +108,7 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_ignorefiles').style.display='none';
 		document.getElementById('jform_params_enable_in_scripts-lbl').style.display='none';
 		document.getElementById('jform_params_enable_in_scripts').style.display='none';
-		document.getElementById('options-advanced').style.display='';
+		document.getElementById('attrib-advanced').style.display='';
 	}
 
 	if(servicetype == 's3')
@@ -125,7 +125,7 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_s3_bucket').style.display='block';
 		document.getElementById('jform_params_s3_cloudfront_domain-lbl').style.display='block';
 		document.getElementById('jform_params_s3_cloudfront_domain').style.display='block';
-		document.getElementById('options-advanced').style.display='';
+		document.getElementById('attrib-advanced').style.display='';
 		document.getElementById('jform_params_rs_api_key-lbl').style.display='none';
 		document.getElementById('jform_params_rs_api_key').style.display='none';
 		document.getElementById('jform_params_rs_username-lbl').style.display='none';
@@ -172,7 +172,7 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_rs_account_is_uk-lbl').style.display='none';
 		document.getElementById('jform_params_rs_account_is_uk').style.display='none';
 		document.getElementById('jform_params_rs_account_is_uk_chzn').style.display='none';
-		document.getElementById('options-advanced').style.display='none';
+		document.getElementById('attrib-advanced').style.display='none';
 		document.getElementById('jform_params_root-lbl').style.display='block';
 		document.getElementById('jform_params_root').style.display='block';
 		document.getElementById('jform_params_cdn-lbl').style.display='block';
