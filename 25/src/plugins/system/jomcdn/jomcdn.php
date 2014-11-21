@@ -1100,10 +1100,6 @@ class plgSystemJomCDN extends JPlugin
 	{
 		static $object;
 
-		if ( $object ) {
-			return $object;
-		}
-
 		// Here is where there would be a check to use other CDNs
 		$object = $this->get_s3_object();
 
