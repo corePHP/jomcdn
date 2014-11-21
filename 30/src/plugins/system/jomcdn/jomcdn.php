@@ -1120,11 +1120,6 @@ class plgSystemJomCDN extends JPlugin
 	function get_cdn_object()
 	{
 		static $object;
-
-		if ( $object ) {
-			return $object;
-		}
-
 		// Here is where there would be a check to use other CDNs
 		$object = $this->get_s3_object();
 
@@ -1250,7 +1245,7 @@ class plgSystemJomCDN extends JPlugin
 		}
 
 		// Send file to CDN
-		if ( !( $cdn_files = $cdn->put_object( $cdn_file, $absolute_path, $content_type ) ) ) {
+		if ( !( $cdn_files = $cdn->put_object( $original_file,  $absolute_path, $cdn_file, $content_type ) ) ) {
 			if ( CDN_DEBUG ) {
 				myPrint( "File not added: {$absolute_path}" );
 			}
@@ -1770,16 +1765,17 @@ class S3_CDN extends CDN_HELER
 	 * For the headers and caching, you can read more at
 	 * {http://www.badpenguin.org/php-howto-control-page-caching}
 	 *
+	 * @param string File contents or original path to file
 	 * @param string File contents or absolute path to file
 	 * @param string The path to the file on the CDN
 	 * @param mixed The type that will be set as the Content-Type header.
 	 * 		It can also be an array of headers.
 	 * @return mixed False if unsucessful, Path to CDN file if successful
 	 */
-	function put_object( $local_file, $cdn_file = '', $type = null )
+	function put_object( $original_file, $absolute_path, $cdn_file = '', $type = null )
 	{
-		if ( '' == $cdn_file ) {
-			$cdn_file = $local_file;
+		if ( '' == $absolute_path ) {
+			$absolute_path = $cdn_file;
 		}
 
 		if ( !is_array( $type ) ) {
@@ -1787,34 +1783,35 @@ class S3_CDN extends CDN_HELER
 		} else {
 			$headers = $type;
 		}
+		$file_name = explode("/", $absolute_path);
 
-		$headers = $this->get_headers( $headers, $cdn_file );
+		$headers = $this->get_headers( $headers, $absolute_path );
 		$input   = null;
 
 		// If the Content-Type is set, lets get it here
 		$content_type = '';
 		if ( is_string( $type ) ) {
 			$content_type = $type;
-		} elseif ( !isset( $headers['Content-Type'] ) && is_file( $local_file ) ) {
-			$content_type = $this->s3->__getMimeType( $local_file );
+		} elseif ( !isset( $headers['Content-Type'] ) && is_file( $cdn_file ) ) {
+			$content_type = $this->s3->__getMimeType( $cdn_file );
 		}
 
 		// If is file
-		if ( is_file( $local_file ) ) {
+		if ( is_file( $cdn_file ) ) {
 			if ( @$headers['do_minify'] ) {
-				$local_file = JFile::read( $local_file );
+				$cdn_file = JFile::read( $cdn_file );
 			} else {
-				$input = $this->s3->inputFile( $local_file );
+				$input = $this->s3->inputFile( $cdn_file );
 			}
 		}
-		if ( null == $input && is_string( $local_file ) ) { // If is content
+		if ( null == $input && is_string( $cdn_file ) ) { // If is content
 			if ( @$headers['do_minify'] ) {
 				switch ( $headers['do_minify'] ) {
 					case 'jsmin':
-						$local_file = CPP_JSMin::minify( $local_file );
+						$cdn_file = CPP_JSMin::minify( $cdn_file );
 						break;
 					case 'cssmin':
-						$local_file = CPP_cssmin::minify( $local_file );
+						$cdn_file = CPP_cssmin::minify( $cdn_file );
 						break;
 					default:
 						break;
@@ -1822,93 +1819,43 @@ class S3_CDN extends CDN_HELER
 			}
 
 			$input = array(
-				'data' => $local_file,
-				'size' => strlen( $local_file ),
-				'md5sum' => base64_encode( md5( $local_file, true ) )
+				'data' => $cdn_file,
+				'size' => strlen( $cdn_file ),
+				'md5sum' => base64_encode( md5( $cdn_file, true ) )
 			);
 		}
 
 		if ( '' != $content_type ) {
 			$input['type'] = $content_type;
 		}
-
-		$gz_put = '';
-		// If we are gziping the file
-		if ( $this->can_compress  && isset( $headers['do_gzip'] ) ) {
-			unset( $headers['do_gzip'] );
-
-			// Read file If is file
-			if ( is_file( $local_file ) ) {
-				$gz_file = JFile::read( $local_file );
-			} else {
-				$gz_file = $local_file;
-			}
-
-			$gz_file = gzencode( $gz_file );
-			$gz_file = array(
-				'data' => $gz_file,
-				'size' => strlen( $gz_file ),
-				'md5sum' => base64_encode( md5( $gz_file, true ) )
-			);
-
-			// Set type coming from original file
-			if ( '' != $content_type ) {
-				$gz_file['type'] = $input['type'];
-			}
-
-			$gz_cdn_file = str_replace(
-				strrchr( $cdn_file, '.' ), '.gz' . strrchr( $cdn_file, '.' ), $cdn_file );
-			$gz_cdn_file_path
-				= str_replace( JPATH_ROOT . '/', '', $gz_cdn_file );
-
-			// Set the enconding header
-			$headers['Content-Encoding'] = 'gzip';
-
-			$gz_put = $this->s3->putObject(
-				$gz_file,
-				$this->bucket,
-				$gz_cdn_file_path,
-				CPP_S3::ACL_PUBLIC_READ,
-				array(),
-				$headers
-			);
-
-			// If success
-			if ( $gz_put ) {
-				$gz_put = '/' . $gz_cdn_file_path;
-			} else {
-				return false;
-			}
-
-			unset( $headers['Content-Encoding'] );
-		}
-
-		$cdn_file_path = str_replace( JPATH_ROOT . '/', '', $cdn_file );
+		$cdn_file_path = str_replace( JPATH_ROOT . '/', '', $absolute_path );
 
 		$put = $this->s3->putObject(
-			$input,
+			$absolute_path,
 			$this->bucket,
 			$cdn_file_path,
+			$input,
 			CPP_S3::ACL_PUBLIC_READ,
 			array(),
 			$headers
 		);
 
 		// If success
-		if ( $put ) {
-			$put = '/' . $cdn_file_path;
-		} else {
-			return false;
-		}
 
-		if ( CDN_DEBUG ) {
-			myPrint( "CDN Added:\t{$cdn_file}\n\t\t{$put}\n\t\t{$gz_put}" );
+		if ( $put )
+		{
+			$put = '/' . $cdn_file_path;
+		}
+		else
+		{
+			return false;
 		}
 
 		return array(
 			'file'    => $put,
-			'gz_file' => $gz_put,
+			'gz_file' => '',
 			'expire'  => @$headers['Expires']
+
 		);
 	}
 
