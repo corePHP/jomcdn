@@ -267,6 +267,93 @@ class plgSystemJomCDN extends JPlugin
 		}
 	}
 
+	function check_database_tables30()
+	{
+		$query = "DESCRIBE #__jomcdn";
+		$this->_db->setQuery( $query );
+
+		try {
+			$this->_db->loadResult();
+		} catch ( Exception $e ) {
+
+			$query = "CREATE TABLE IF NOT EXISTS `#__jomcdn` (
+			  `id` int(11) NOT NULL auto_increment,
+			  `cache` varchar(32) NOT NULL COMMENT 'The cache id',
+			  `request` varchar(8) NOT NULL COMMENT 'This request column is composed of the component/view/layout/id of the request',
+			  PRIMARY KEY  (`id`),
+			  UNIQUE KEY `cache` (`cache`)
+			)";
+
+			$this->_db->setQuery( $query );
+			$this->_db->query();
+
+			$query = "CREATE TABLE IF NOT EXISTS `#__jomcdn_files` (
+			  `id` int(11) NOT NULL auto_increment,
+			  `file` text NOT NULL COMMENT 'File path as it is found in the wild',
+			  `file_path` text NOT NULL COMMENT 'Absolute file path of file',
+			  `remote_file` text NOT NULL COMMENT 'The path to the remote file',
+			  `remote_file_gz` text NOT NULL COMMENT 'The path to the gzip version of the remote file',
+			  `expiration` int(11) NOT NULL COMMENT 'Expiration of cached file',
+			  `path_hash` varchar(32) NOT NULL COMMENT 'The md5 hash for the absolute path of the file',
+			  `page` bit(64) NOT NULL COMMENT 'This column keeps record of which pages this file has appeared on',
+			  PRIMARY KEY  (`id`),
+			  UNIQUE KEY `path_hash` (`path_hash`),
+			  KEY `component` (`page`)
+			)";
+
+			$this->_db->setQuery( $query );
+			$this->_db->query();
+		}
+
+		$query = "DESCRIBE #__jomcdn_config";
+		$this->_db->setQuery( $query );
+		try {
+			$this->_db->loadResult();
+		} catch ( Exception $e ) {
+
+			$query = "
+			CREATE TABLE IF NOT EXISTS `#__jomcdn_config` (
+			  `name` varchar(255) NOT NULL,
+			  `params` text NOT NULL,
+			  PRIMARY KEY (`name`)
+			) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
+			$this->_db->setQuery( $query );
+			$this->_db->query();
+
+			$query = "INSERT INTO #__jomcdn_config
+				( `name`, `params`)
+				VALUES
+				( 'db_version', '1000');";
+			$this->_db->setQuery( $query );
+			$this->_db->query();
+		}
+
+		$query = "SELECT `params`
+			FROM #__jomcdn_config
+				WHERE `name` = 'db_version'";
+		$this->_db->setQuery( $query );
+		$db_version = (int) $this->_db->loadResult();
+		$new_version = $db_version;
+
+		if ( $db_version < 1001 ) {
+			$query = "ALTER TABLE `#__jomcdn`
+				ADD `expires` INT( 11 ) NOT NULL COMMENT 'The time that the cache request expires.',
+				ADD INDEX ( `expires` )";
+			$this->_db->setQuery( $query );
+			$this->_db->query();
+			$new_version = 1001;
+		}
+
+		if ( $db_version != $new_version ) {
+			$query = "UPDATE #__jomcdn_config
+				SET `params` = '{$new_version}'
+					WHERE `name` = 'db_version'";
+			$this->_db->setQuery( $query );
+			$this->_db->query();
+		}
+
+	}
+
 	function onAfterRoute()
 	{
 		if( $this->params->get( 'cdn_type' ) === 'maxcdn'  ) {
@@ -366,7 +453,16 @@ class plgSystemJomCDN extends JPlugin
 			$this->can_compress = (	function_exists('gzencode') );
 
 			// Check to see if database tables exist
-			$this->check_database_tables();
+			$version = new JVersion();
+			$jversion = $version->RELEASE;
+			if($jversion >= 3)
+			{
+				$this->check_database_tables30();
+			}
+			else
+			{
+				$this->check_database_tables();
+			}
 
 			$this->get_caches();
 			return;
