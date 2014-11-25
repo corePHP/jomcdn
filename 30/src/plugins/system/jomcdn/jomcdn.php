@@ -1948,7 +1948,7 @@ class RACKSPACE_CDN extends CDN_HELER
 		if ( defined( 'CDN_CRON_RUNNING' ) && CDN_CRON_RUNNING )
 		{
 			$path = dirname( __FILE__ ) .'/'. $this->_name
-				. 'rs/rackspace-php-cloudfiles/cloudfiles.php';
+				. 'rs/cloudfiles.php';
 			require_once $path;
 			$this->rs = new CF_Authentication( $api_key, $username, $region, $account );
 		}
