@@ -1939,30 +1939,22 @@ class RACKSPACE_CDN extends CDN_HELER
 	 */
 	function __construct( $username, $api_key, $bucket, $config = array() )
 	{
+
 		foreach ( $config as $key => $value ) {
 			$this->$key = $value;
 		}
-
-		if ( defined( 'CDN_CRON_RUNNING' ) && CDN_CRON_RUNNING ) {
+		$region = $this->params->get( 'rs_region', 'ORD' );
+		$account = $this->params->get( 'rs_account_is_uk', 0 );
+		if ( defined( 'CDN_CRON_RUNNING' ) && CDN_CRON_RUNNING )
+		{
 			$path = dirname( __FILE__ ) .'/'. $this->_name
-				. '/rackspace-php-cloudfiles/cloudfiles.php';
-			if ( $this->params->get( 'rs_account_is_uk', 0 ) ) {
-				$path = dirname( __FILE__ ) .'/'. $this->_name
-					. '/rackspace-php-cloudfiles/cloudfiles-uk.php';
-			}
+				. 'rs/rackspace-php-cloudfiles/cloudfiles.php';
 			require_once $path;
-
-			$auth = new CF_Authentication( $api_key, $username );
-			$auth->authenticate();
-
-			$conn = new CF_Connection( $auth );
-			$this->rs = $conn->create_container( $bucket );
-			$this->rs->make_public();
+			$this->rs = new CF_Authentication( $api_key, $username, $region, $account );
 		}
 
 		$this->bucket = $bucket;
 	}
-
 	/**
 	 * Sends a file to the CDN
 	 * The file that is sent can either be a string or the absolute path to a file
@@ -1976,10 +1968,11 @@ class RACKSPACE_CDN extends CDN_HELER
 	 * 		It can also be an array of headers.
 	 * @return mixed False if unsucessful, Path to CDN file if successful
 	 */
-	function put_object( $local_file, $cdn_file = '', $type = null )
+	function put_object( $original_file, $absolute_path, $cdn_file = '', $type = null )
 	{
-		if ( '' == $cdn_file ) {
-			$cdn_file = $local_file;
+
+		if ( '' == $absolute_path ) {
+			$absolute_path = $cdn_file;
 		}
 
 		if ( !is_array( $type ) ) {
@@ -1987,8 +1980,9 @@ class RACKSPACE_CDN extends CDN_HELER
 		} else {
 			$headers = $type;
 		}
+		$file_name = explode("/", $absolute_path);
 
-		$headers = $this->get_headers( $headers, $cdn_file );
+		$headers = $this->get_headers( $headers, $absolute_path );
 		$input   = null;
 
 		// If the Content-Type is set, lets get it here
@@ -2001,54 +1995,66 @@ class RACKSPACE_CDN extends CDN_HELER
 			$content_type = $headers['Content-Type'];
 		}
 
+
 		// If is file
-		if ( is_file( $local_file ) ) {
-			if ( $headers['do_minify'] ) {
-				$local_file = JFile::read( $local_file );
+		if ( is_file( $cdn_file ) ) {
+			if ( @$headers['do_minify'] ) {
+				$cdn_file = JFile::read( $cdn_file );
 			}
 		}
-		if ( null == $input && is_string( $local_file ) ) { // If is content
-			if ( $headers['do_minify'] ) {
+		if ( null == $input && is_string( $cdn_file ) ) { // If is content
+			if ( @$headers['do_minify'] ) {
 				switch ( $headers['do_minify'] ) {
 					case 'jsmin':
-						$local_file = CPP_JSMin::minify( $local_file );
+						$cdn_file = CPP_JSMin::minify( $cdn_file );
 						break;
 					case 'cssmin':
-						$local_file = CPP_cssmin::minify( $local_file );
+						$cdn_file = CPP_cssmin::minify( $cdn_file );
 						break;
 					default:
 						break;
 				}
 			}
+
+			$input = array(
+				'data' => $cdn_file,
+				'size' => strlen( $cdn_file ),
+				'md5sum' => base64_encode( md5( $cdn_file, true ) )
+			);
 		}
 
-		$cdn_file_path = str_replace( JPATH_ROOT . '/', '', $cdn_file );
-
-		$asset = $this->rs->create_object( $cdn_file_path );
-		$asset->content_type = $content_type;
-		$asset->metadata = $headers;
-
-		if ( is_file( $local_file ) ) {
-			$asset->load_from_filename( $local_file );
-		} else {
-			if ( !$local_file ) {
-				return false;
-			}
-			$asset->write( $local_file, strlen( $local_file ) );
+		if ( '' != $content_type ) {
+			$input['type'] = $content_type;
 		}
+		$cdn_file_path = str_replace( JPATH_ROOT . '/', '', $absolute_path );
+
+		$put = $this->rs->putObject(
+			$absolute_path,
+			$this->bucket,
+			$cdn_file_path,
+			$input,
+			array(),
+			$headers
+		);
 
 		// If success
-		$put = $asset->public_uri();
 
-		if ( CDN_DEBUG ) {
-			myPrint( "CDN Added:\t{$cdn_file}\n\t\t{$put}" );
+		if ( $put )
+		{
+			$put = $put;
+		}
+		else
+		{
+			return false;
 		}
 
 		return array(
 			'file'    => $put,
-			'gz_file' => '', // Nothing for Rackspace as it is done on the FLYYY
+			'gz_file' => '',
 			'expire'  => @$headers['Expires']
+
 		);
+
 	}
 
 	/**

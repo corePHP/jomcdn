@@ -41,6 +41,14 @@
 			<option value="0">US</option>
 			<option value="1">UK</option>
 		</field>
+		<field name="rs_region" type="list" default="ORD" label="Account Region" description="Account Region">
+			<option value="DFW">Dallas-Fort Worth (DFW)</option>
+			<option value="ORD">Chicago (ORD)</option>
+			<option value="IAD">Northern Virginia (IAD)</option>
+			<option value="LON">London (LON)</option>
+			<option value="SYD">Sydney (SYD)</option>
+			<option value="HKG">Hong Kong (HKG)</option>
+		</field>
 		<field name="@spacer" type="spacer" default="======= MAXCDN Configuration =======" label="" />
 		<field name="root"
 			   type="text"

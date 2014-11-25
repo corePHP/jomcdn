@@ -30,12 +30,15 @@ class JFormFieldservice extends JFormField
 		$session = JFactory::getSession();
 		$session->set('serviceType', $this->value);
 		$serviceType = $session->get('serviceType');
+		$version = new JVersion();
+		
 		?>
 		<script>
 			window.onload=function()
 			{
 				var service = '<?php echo $serviceType;?>';
-				getServiceParameters(service);
+				var jversion = '<?php echo $version->RELEASE;?>';
+				getServiceParameters(service, jversion);
 			}
 		</script>
 
@@ -53,7 +56,7 @@ class JFormFieldservice extends JFormField
 
 <script>
 
-function getServiceParameters(servicetype)
+function getServiceParameters(servicetype, jversion)
 {
 	if(servicetype == 'rs')
 	{
