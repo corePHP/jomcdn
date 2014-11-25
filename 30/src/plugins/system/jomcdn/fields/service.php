@@ -36,13 +36,15 @@ class JFormFieldservice extends JFormField
 		$session = JFactory::getSession();
 		$session->set('serviceType', $this->value);
 		$serviceType = $session->get('serviceType');
+		$version = new JVersion();
 		?>
 
 		<script>
 			window.onload=function()
 			{
 				var service = '<?php echo $serviceType;?>';
-				getServiceParameters(service);
+				var jversion = '<?php echo $version->RELEASE;?>';
+				getServiceParameters(service, jversion);
 			}
 
 		</script>
@@ -52,7 +54,7 @@ class JFormFieldservice extends JFormField
 		$service[]   = JHTML::_('select.option', 'rs', 'Rackspace Cloud Files');
 		$service[]   = JHTML::_('select.option', 'maxcdn', 'MaxCDN');
 
-		return JHTML::_('select.genericlist',  $service, $this->name, 'class="inputbox" onChange="getServiceParameters(this.value);"', 'value', 'text', $this->value, $this->id);
+		return JHTML::_('select.genericlist',  $service, $this->name, 'class="inputbox" onChange="getServiceParameters(this.value, '.$version->RELEASE.');"', 'value', 'text', $this->value, $this->id);
 	}
 }
 
@@ -72,7 +74,7 @@ class JFormFieldservice extends JFormField
 
 </style>
 <script>
-function getServiceParameters(servicetype)
+function getServiceParameters(servicetype, jversion)
 {
 	if(servicetype == 'rs')
 	{
@@ -82,7 +84,10 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_s3_secret_key').style.display='none';
 		document.getElementById('jform_params_s3_use_ssl-lbl').style.display='none';
 		document.getElementById('jform_params_s3_use_ssl').style.display='none';
-		document.getElementById('jform_params_s3_use_ssl_chzn').style.display='none';
+		if(jversion >= 3)
+		{
+			document.getElementById('jform_params_s3_use_ssl_chzn').style.display='none';
+		}
 		document.getElementById('jform_params_s3_bucket-lbl').style.display='none';
 		document.getElementById('jform_params_s3_bucket').style.display='none';
 		document.getElementById('jform_params_s3_cloudfront_domain-lbl').style.display='none';
@@ -95,7 +100,16 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_rs_bucket').style.display='block';
 		document.getElementById('jform_params_rs_account_is_uk-lbl').style.display='block';
 		document.getElementById('jform_params_rs_account_is_uk').style.display='none';
-		document.getElementById('jform_params_rs_account_is_uk_chzn').style.display='block';
+		if(jversion >= 3)
+		{
+			document.getElementById('jform_params_rs_account_is_uk_chzn').style.display='block';
+		}
+		document.getElementById('jform_params_rs_region-lbl').style.display='block';
+		document.getElementById('jform_params_rs_region').style.display='none';
+		if(jversion >= 3)
+		{
+			document.getElementById('jform_params_rs_region_chzn').style.display='block';
+		}
 		document.getElementById('jform_params_root-lbl').style.display='none';
 		document.getElementById('jform_params_root').style.display='none';
 		document.getElementById('jform_params_cdn-lbl').style.display='none';
@@ -108,7 +122,21 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_ignorefiles').style.display='none';
 		document.getElementById('jform_params_enable_in_scripts-lbl').style.display='none';
 		document.getElementById('jform_params_enable_in_scripts').style.display='none';
-		document.getElementById('attrib-advanced').style.display='';
+		if(jversion >= 3)
+		{
+			if(document.getElementById('options-advanced'))
+			{
+				document.getElementById('options-advanced').style.display='';
+			}
+			if(document.getElementById('attrib-advanced'))
+			{
+				document.getElementById('attrib-advanced').style.display='';
+			}
+		}
+		else
+		{
+			document.getElementById('advanced-options').style.display='';
+		}
 	}
 
 	if(servicetype == 's3')
@@ -120,12 +148,29 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_s3_secret_key').style.display='block';
 		document.getElementById('jform_params_s3_use_ssl-lbl').style.display='block';
 		document.getElementById('jform_params_s3_use_ssl').style.display='none';
-		document.getElementById('jform_params_s3_use_ssl_chzn').style.display='block';
+		if(jversion >= 3)
+		{
+			document.getElementById('jform_params_s3_use_ssl_chzn').style.display='block';
+		}
 		document.getElementById('jform_params_s3_bucket-lbl').style.display='block';
 		document.getElementById('jform_params_s3_bucket').style.display='block';
 		document.getElementById('jform_params_s3_cloudfront_domain-lbl').style.display='block';
 		document.getElementById('jform_params_s3_cloudfront_domain').style.display='block';
-		document.getElementById('attrib-advanced').style.display='';
+		if(jversion >= 3)
+		{
+			if(document.getElementById('options-advanced'))
+			{
+				document.getElementById('options-advanced').style.display='';
+			}
+			if(document.getElementById('attrib-advanced'))
+			{
+				document.getElementById('attrib-advanced').style.display='';
+			}
+		}
+		else
+		{
+			document.getElementById('advanced-options').style.display='';
+		}
 		document.getElementById('jform_params_rs_api_key-lbl').style.display='none';
 		document.getElementById('jform_params_rs_api_key').style.display='none';
 		document.getElementById('jform_params_rs_username-lbl').style.display='none';
@@ -134,7 +179,16 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_rs_bucket').style.display='none';
 		document.getElementById('jform_params_rs_account_is_uk-lbl').style.display='none';
 		document.getElementById('jform_params_rs_account_is_uk').style.display='none';
-		document.getElementById('jform_params_rs_account_is_uk_chzn').style.display='none';
+		if(jversion >= 3)
+		{
+			document.getElementById('jform_params_rs_account_is_uk_chzn').style.display='none';
+		}
+		document.getElementById('jform_params_rs_region-lbl').style.display='none';
+		document.getElementById('jform_params_rs_region').style.display='none';
+		if(jversion >= 3)
+		{
+			document.getElementById('jform_params_rs_region_chzn').style.display='none';
+		}
 		document.getElementById('jform_params_root-lbl').style.display='none';
 		document.getElementById('jform_params_root').style.display='none';
 		document.getElementById('jform_params_cdn-lbl').style.display='none';
@@ -158,7 +212,10 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_s3_secret_key').style.display='none';
 		document.getElementById('jform_params_s3_use_ssl-lbl').style.display='none';
 		document.getElementById('jform_params_s3_use_ssl').style.display='none';
-		document.getElementById('jform_params_s3_use_ssl_chzn').style.display='none';
+		if(jversion >= 3)
+		{
+			document.getElementById('jform_params_s3_use_ssl_chzn').style.display='none';
+		}
 		document.getElementById('jform_params_s3_bucket-lbl').style.display='none';
 		document.getElementById('jform_params_s3_bucket').style.display='none';
 		document.getElementById('jform_params_s3_cloudfront_domain-lbl').style.display='none';
@@ -171,8 +228,31 @@ function getServiceParameters(servicetype)
 		document.getElementById('jform_params_rs_bucket').style.display='none';
 		document.getElementById('jform_params_rs_account_is_uk-lbl').style.display='none';
 		document.getElementById('jform_params_rs_account_is_uk').style.display='none';
-		document.getElementById('jform_params_rs_account_is_uk_chzn').style.display='none';
-		document.getElementById('attrib-advanced').style.display='none';
+		if(jversion >= 3)
+		{
+			document.getElementById('jform_params_rs_account_is_uk_chzn').style.display='none';
+		}
+		document.getElementById('jform_params_rs_region-lbl').style.display='none';
+		document.getElementById('jform_params_rs_region').style.display='none';
+		if(jversion >= 3)
+		{
+			document.getElementById('jform_params_rs_region_chzn').style.display='none';
+		}
+		if(jversion >= 3)
+		{
+			if(document.getElementById('options-advanced'))
+			{
+				document.getElementById('options-advanced').style.display='none';
+			}
+			if(document.getElementById('attrib-advanced'))
+			{
+				document.getElementById('attrib-advanced').style.display='none';
+			}
+		}
+		else
+		{
+			document.getElementById('advanced-options').style.display='none';
+		}
 		document.getElementById('jform_params_root-lbl').style.display='block';
 		document.getElementById('jform_params_root').style.display='block';
 		document.getElementById('jform_params_cdn-lbl').style.display='block';
