@@ -192,9 +192,8 @@ class plgSystemJomCDN extends JPlugin
 	{
 		$query = "DESCRIBE #__jomcdn";
 		$this->_db->setQuery( $query );
-		try {
-			$this->_db->loadResult();
-		} catch ( Exception $e ) {
+
+		if ( !$this->_db->loadResult() ) {
 			$query = "CREATE TABLE IF NOT EXISTS `#__jomcdn` (
 			  `id` int(11) NOT NULL auto_increment,
 			  `cache` varchar(32) NOT NULL COMMENT 'The cache id',
@@ -224,9 +223,8 @@ class plgSystemJomCDN extends JPlugin
 
 		$query = "DESCRIBE #__jomcdn_config";
 		$this->_db->setQuery( $query );
-		try {
-			$this->_db->loadResult();
-		} catch ( Exception $e ) {
+
+		if ( !$this->_db->loadResult() ) {
 			$query = "
 			CREATE TABLE IF NOT EXISTS `#__jomcdn_config` (
 			  `name` varchar(255) NOT NULL,
@@ -1948,7 +1946,7 @@ class RACKSPACE_CDN extends CDN_HELER
 		if ( defined( 'CDN_CRON_RUNNING' ) && CDN_CRON_RUNNING )
 		{
 			$path = dirname( __FILE__ ) .'/'. $this->_name
-				. 'rs/cloudfiles.php';
+				. '/rs/cloudfiles.php';
 			require_once $path;
 			$this->rs = new CF_Authentication( $api_key, $username, $region, $account );
 		}
@@ -1989,8 +1987,8 @@ class RACKSPACE_CDN extends CDN_HELER
 		$content_type = '';
 		if ( is_string( $type ) ) {
 			$content_type = $type;
-		} elseif ( !isset( $headers['Content-Type'] ) && is_file( $local_file ) ) {
-			$content_type = $this->__getMimeType( $local_file );
+		} elseif ( !isset( $headers['Content-Type'] ) && is_file( $cdn_file ) ) {
+			$content_type = $this->__getMimeType( $cdn_file );
 		} elseif ( isset( $headers['Content-Type'] ) ) {
 			$content_type = $headers['Content-Type'];
 		}
