@@ -50,7 +50,7 @@ define("MAX_OBJECT_SIZE", 5*1024*1024*1024+1); # bigger than S3! ;-)
  *
  * @package php-cloudfiles
  */
-require '../vendor/autoload.php';
+require 'vendor/autoload.php';
 use OpenCloud\Rackspace;
 class CF_Authentication
 

@@ -99,16 +99,24 @@ function getServiceParameters(servicetype, jversion)
 		document.getElementById('jform_params_rs_bucket-lbl').style.display='block';
 		document.getElementById('jform_params_rs_bucket').style.display='block';
 		document.getElementById('jform_params_rs_account_is_uk-lbl').style.display='block';
-		document.getElementById('jform_params_rs_account_is_uk').style.display='none';
 		if(jversion >= 3)
 		{
+			document.getElementById('jform_params_rs_account_is_uk').style.display='none';
 			document.getElementById('jform_params_rs_account_is_uk_chzn').style.display='block';
 		}
+		else
+		{
+			document.getElementById('jform_params_rs_account_is_uk').style.display='block';
+		}
 		document.getElementById('jform_params_rs_region-lbl').style.display='block';
-		document.getElementById('jform_params_rs_region').style.display='none';
 		if(jversion >= 3)
 		{
+			document.getElementById('jform_params_rs_region').style.display='none';
 			document.getElementById('jform_params_rs_region_chzn').style.display='block';
+		}
+		else
+		{
+			document.getElementById('jform_params_rs_region').style.display='block';
 		}
 		document.getElementById('jform_params_root-lbl').style.display='none';
 		document.getElementById('jform_params_root').style.display='none';
@@ -147,11 +155,16 @@ function getServiceParameters(servicetype, jversion)
 		document.getElementById('jform_params_s3_secret_key-lbl').style.display='block';
 		document.getElementById('jform_params_s3_secret_key').style.display='block';
 		document.getElementById('jform_params_s3_use_ssl-lbl').style.display='block';
-		document.getElementById('jform_params_s3_use_ssl').style.display='none';
 		if(jversion >= 3)
 		{
+			document.getElementById('jform_params_s3_use_ssl').style.display='none';
 			document.getElementById('jform_params_s3_use_ssl_chzn').style.display='block';
 		}
+		else
+		{
+			document.getElementById('jform_params_s3_use_ssl').style.display='block';
+		}
+
 		document.getElementById('jform_params_s3_bucket-lbl').style.display='block';
 		document.getElementById('jform_params_s3_bucket').style.display='block';
 		document.getElementById('jform_params_s3_cloudfront_domain-lbl').style.display='block';
