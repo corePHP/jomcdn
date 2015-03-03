@@ -21,7 +21,9 @@
 		<language tag="en-GB">en-GB/en-GB.plg_system_jomcdn.sys.ini</language>
 	</languages>
 
-	<config addfieldpath="plugins/system/jomcdn/fields"><fields name="params"><fieldset name="basic">
+	<config addfieldpath="plugins/system/jomcdn/fields">
+		<fields name="params">
+			<fieldset name="basic">
 		<field name="cdn_type" type="service"  label="CDN Service to use" />
 		<field name="@spacer" type="spacer" default="======= Amazon CDN Configuration =======" label="" />
 		<field name="s3_access_key" type="password" default="" label="Amazon access key" description="Your Amazon S3 access key, you can retrieve this from 'Security Credentials' under the 'Your Account' page in amazon." />
@@ -65,7 +67,6 @@
 		<field name="filetypes"
 			   type="maxcdnfiletypes"
 			   newlines="1"
-			   showcheckall='1'
 			   default="*"
 			   label="JOMCDN_MAXCDN_FILE_TYPES"
 			   description="JOMCDN_MAXCDN_FILE_TYPES_DESC">
