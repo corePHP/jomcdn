@@ -64,6 +64,14 @@
 			   default=""
 			   label="JOMCDN_MAXCDN_DOMAIN"
 			   description="JOMCDN_MAXCDN_DOMAIN_DESC" />
+		<field name="https"
+			   type="list"
+			   default="0"
+			   label="JOMCDN_MAXCDN_HTTPS"
+			   description="JOMCDN_MAXCDN_HTTPS_DESC">
+			<option value="0">No</option>
+			<option value="1">Yes</option>
+		</field>
 		<field name="filetypes"
 			   type="maxcdnfiletypes"
 			   newlines="1"
@@ -104,7 +112,9 @@
 		</field>
 	</fieldset></fields></config>
 
-	<config><fields name="params"><fieldset name="advanced">
+	<config>
+		<fields name="params">
+			<fieldset name="advanced">
 		<field name="@spacer" type="spacer" default="======== Cron Job Parameters ========" label=""  />
 		<field name="cache_life_time" type="text" default="7200" label="Cache lifetime" description="For how long should Joomla page caches exist before a page is parsed again? (in seconds)." />
 		<field name="cron_url" type="text" default="cdn_run_cron" label="Cron Job URL Parameter" description="You should change this to something unique to your site, so that you are the only one running the cronjob." />
@@ -141,7 +151,7 @@
 
 		<field name="@spacer" type="spacer" default="======== Extra File Types ========" label="" />
 		<field name="cache_extra_filetypes" type="textarea" default="dmg,864000|exe,864000" cols="30" rows="5" label="Extra extensions" description="Here you can add custom file extensions to the CDN. This must be in the following format (without the double quotes): &#34;dmg,864000|exe,864000&#34;, where the value before the comma is the extension and the value after is the time for the file to be cached is seconds, extensions must be separated by a pipe character &#34;|&#34;." />
-  		<field name="cache_ignore_files" type="textarea" default="" cols="30" rows="5" label="Ignore File Upload" description="Here you can add custom file extensions to be ignored by Rackspace or Amazon CDN. Must have file extension separated by a comma (.woff,.ttf,.txt)" />
+		<field name="cache_ignore_files" type="textarea" default="" cols="30" rows="5" label="Ignore File Upload" description="Here you can add custom file extensions to be ignored by Rackspace or Amazon CDN. Must have file extension separated by a comma (.woff,.ttf,.txt)" />
 
 		<field name="@spacer" type="spacer" default="======== Server Level Parameters ========" label="" />
 		<field name="execution_time" type="text" default="3600" label="Script execution time" description="Page execution time limit for when running the cronjob. (in seconds). Change this if the cron job is not executing the whole way." />
