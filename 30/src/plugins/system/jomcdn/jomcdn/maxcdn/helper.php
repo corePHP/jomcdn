@@ -128,7 +128,7 @@ class MAXCDNHelper
 			return;
 		}
 
-		
+
 		if (isset($article->text) &&
 			($context != 'com_content.category' ||
 				!(JFactory::getApplication()->input->get('view') == 'category' && !JFactory::getApplication()->input->get('layout'))
@@ -222,8 +222,12 @@ class MAXCDNHelper
 
 	function replaceBySet(&$str, &$params)
 	{
+		if( $this->params->https ){
+			$http = 'https://';
+		} else {
+			$http = 'http://';
+		}
 
-		$http = 'http://';
 		$this->replaceBySearches($str, $params->searches, $params, $http);
 
 		if (!(strpos($str, '<script') === false)) {
@@ -380,4 +384,3 @@ class MAXCDNHelper
 		);
 	}
 }
-
