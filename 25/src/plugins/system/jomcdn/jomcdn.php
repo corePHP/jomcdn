@@ -646,25 +646,7 @@ class plgSystemJomCDN extends JPlugin
 			}
 		}
 
-		if ( $this->params->get( 'smushit_please', 0 ) ) {
-			if ( !function_exists( 'json_encode' ) ) {
-				require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'JSON' .DS. 'JSON.php' );
-			}
-			require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'http' .DS. 'class.http.php' );
-
-			foreach ( $images as $file => $path ) {
-				$url = JURI::root() . str_replace( JPATH_ROOT . DS, '', $path );
-
-				if ( CDN_DEBUG ) {
-					myPrint( "Smushing: {$url}..." );
-				}
-				$_new_path = $this->smush_it( $url );
-
-				if ( $_new_path ) {
-					$images[$file] = array( 'absolute' => $images[$file], 'temp' => $_new_path );
-				}
-			}
-		}
+		
 
 		return $images;
 	}
@@ -849,36 +831,7 @@ class plgSystemJomCDN extends JPlugin
 				continue;
 			}
 
-			// Check to see if it is an image so that we smush.it!
-			$smushable = false;
-			$_info = pathinfo( $file_path );
-
-			if ( isset( $_info['extension'] ) ) {
-				if ( in_array( strtolower( $_info['extension'] ), $this->image_extensions ) ) {
-					$smushable = true;
-				}
-			}
-
-			// Smush smush
-			if ( $smushable && $this->params->get( 'smushit_please', 0 ) ) {
-				if ( !function_exists( 'json_encode' ) ) {
-					require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'JSON' .DS.
-						'JSON.php' );
-				}
-				require_once( dirname( __FILE__ ) .DS. $this->_name .DS. 'http' .DS.
-				 	'class.http.php' );
-
-				$url = JURI::root() . str_replace( JPATH_ROOT . DS, '', $file_path );
-
-				if ( CDN_DEBUG ) {
-					myPrint( "Smushing: {$url}..." );
-				}
-				$_new_path = $this->smush_it( $url );
-
-				if ( $_new_path ) {
-					$file_path = array( 'absolute' => $file_path, 'temp' => $_new_path );
-				}
-			}
+			
 
 			// If file not yet stored and not stylesheet - Store file
 			if ( !( $cdn_files = $this->add_file( $file, $file_path ) ) ) {
@@ -1340,150 +1293,6 @@ class plgSystemJomCDN extends JPlugin
 		return true;
 	}
 
-	/**
-	 * Function to use Yahoo's smush.it service
-	 * It will save the new generated image to Joomla's tmp folder
-	 *
-	 * @param string URL of local file
-	 * @return string New file name
-	 **/
-	function smush_it( $_original_url )
-	{
-		global $app;
-
-		$url = 'http://www.smushit.com/ysmush.it/ws.php?img=' . urlencode( $_original_url );
-
-		$options = array(
-			'timeout'    => 60
-		);
-
-		$http = new Http();
-		$http->initialize( $options );
-		$http->setUseragent( 'jomCDN/1.1.0 (+http://www.corephp.com/joomla-products/jomcdn.html)' );
-		$http->execute( $url );
-
-		if ( $http->error ) {
-			if ( CDN_DEBUG ) {
-				echo 'Smush it error: ' . $http->error;
-			}
-			return false;
-		}
-
-		if ( 200 != $http->status ) {
-			if ( CDN_DEBUG ) {
-				echo 'Error on request.';
-			}
-			return false;
-		}
-
-		$body = trim( $http->result );
-		if ( !$body ) {
-			if ( CDN_DEBUG ) {
-				echo 'No reponse.';
-			}
-			return false;
-		}
-
-		// Just in case...
-		if ( strpos( trim( $body ), '{' ) != 0 ) {
-			if ( CDN_DEBUG ) {
-				echo 'Bad response from Smush.it';
-			}
-			return false;
-		}
-
-		$data = json_decode( $body );
-
-		if ( -1 === intval( $data->dest_size ) || $data->src_size == $data->dest_size ) {
-			if ( CDN_DEBUG ) {
-				echo 'No savings, no smush smush fo you!';
-			}
-			return false;
-		}
-
-		if ( !$data->dest ) {
-			if ( CDN_DEBUG ) {
-				echo ($data->error ? 'Smush.it error: ' . $data->error : 'Unknown error.');
-			}
-			return false;
-		}
-
-		$processed_url = urldecode( $data->dest );
-
-		$options = array(
-			'timeout'    => 300
-		);
-		$http->initialize( $options );
-		$http->setUseragent( 'jomCDN/1.1.0 (+http://www.corephp.com/joomla-products/jomcdn.html)' );
-		$http->execute( $processed_url );
-
-		if ( 200 != $http->status ) {
-			if ( CDN_DEBUG ) {
-				echo 'Error on request #2.';
-			}
-			return false;
-		}
-
-		$body = $http->result;
-		if ( !$body ) {
-			if ( CDN_DEBUG ) {
-				echo 'No reponse #2.';
-			}
-			return false;
-		}
-
-		// Get unique filename before store!
-		$temp = rtrim( $app->getCfg( 'tmp_path' ), '/' . DS );
-		$temp_file = $temp .DS. basename( $_original_url );
-		$counter = 1;
-		while ( file_exists( $temp_file ) ) {
-			$pieces = count( explode( '.', $temp_file ) );
-			$_temp = explode( '.', $temp_file, $pieces );
-			$temp_file = str_replace( $_temp[ $pieces - 2 ] . '.' . $_temp[ $pieces - 1 ],
-					$_temp[ $pieces - 2 ] . $counter . '.' . $_temp[ $pieces - 1 ], $temp_file);
-			$counter++;
-		}
-
-		$handle = @fopen( $temp_file, 'wb' );
-		if ( !$handle ) {
-			if ( CDN_DEBUG ) {
-				echo 'Could not create temporary file:' . $temp_file;
-			}
-			return false;
-		}
-
-		fwrite( $handle, $body );
-		fclose( $handle );
-
-		$savings = intval( $data->src_size ) - intval( $data->dest_size );
-		$savings_str = $this->smushit_format_bytes( $savings, 1 );
-		$savings_str = str_replace( ' ', '&nbsp;', $savings_str );
-
-		if ( CDN_DEBUG ) {
-			printf( 'Reduced by %01.1f%% (%s)', $data->percent, $savings_str );
-		}
-
-		// This needs to be unliked eventually
-		$this->unlinked[] = $temp_file;
-
-		return $temp_file;
-	}
-
-	/**
-	 * Return the filesize in a humanly readable format.
-	 * Taken from http://www.php.net/manual/en/function.filesize.php#91477
-	 */
-	function smushit_format_bytes( $bytes, $precision = 2 )
-	{
-	    $units = array( 'B', 'KB', 'MB', 'GB', 'TB' );
-
-	    $bytes = max( $bytes, 0 );
-	    $pow   = floor( ( $bytes ? log( $bytes ) : 0 ) / log( 1024 ) );
-	    $pow   = min( $pow, count( $units ) - 1 );
-	    $bytes /= pow( 1024, $pow );
-
-	    return round( $bytes, $precision ) . ' ' . $units[$pow];
-	}
 }
 
 

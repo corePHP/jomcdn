@@ -114,10 +114,7 @@
 		</field>
 
 		<field name="@spacer" type="spacer" default="======== Feature switches ========" label="" />
-		<field name="smushit_please" type="list" default="1" label="Use smush.it" description="Smush.it is a service offered by Yahoo to optimize images. You can read more here http://developer.yahoo.com/yslow/smushit/ and here http://www.smushit.com/ysmush.it/">
-			<option value="0">NO</option>
-			<option value="1">YES</option>
-		</field>
+		
 
 		<field name="@spacer" type="spacer" default="======== CDN Object Cache Times ========" label="" />
 		<field name="cache_image_lifetime" type="text" default="864000" label="Image cache lifetime" description="This includes .jpg', .jpeg, .gif, .png files. This is a cache at the browser level. For how long should the browser cache images from the CDN before it does a request for them again (in seconds), default '864000' which is 10 days." />
