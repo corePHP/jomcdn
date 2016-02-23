@@ -130,14 +130,17 @@ class CPP_S3 {
 		 For more information about bucket name restrictions, see:
 		 http://docs.aws.amazon.com/AmazonS3/latest/dev/BucketRestrictions.html
 		*/
-
-		$result = $client->createBucket(array(
+		if(!$client->doesBucketExist($bucket))
+		{
+		 	$result = $client->createBucket(array(
 			'ACL' => $acl,
 		    'Bucket' => $bucket
-		));
+			));
 
-		// Wait until the bucket is created
-		$client->waitUntilBucketExists(array('Bucket' => $bucket));
+			// Wait until the bucket is created
+			$client->waitUntilBucketExists(array('Bucket' => $bucket));
+		}
+
 
 		/*
 		 Files in Amazon S3 are called "objects" and are stored in buckets. A specific
