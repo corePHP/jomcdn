@@ -763,8 +763,55 @@ class plgSystemJomCDN extends JPlugin
 			}
 		}
 
+		$smushit_please = $this->params->get( 'smushit_please', 0 );
+		if ( $smushit_please )
+		{
+			foreach ( $images as $file => $path )
+			{				
+				$url = JURI::root() . str_replace( JPATH_ROOT , '', $path );
+				if ( CDN_DEBUG )
+				{
+					myPrint( "Smushing: {$url}..." );
+				}
 
+				$_new_path = $this->smush_it( $url );
+				if ( $_new_path )
+				{
+					$images[$file] = array( 'absolute' => $images[$file], 'temp' => $_new_path );
+				}
+			}
+		}
 		return $images;
+	}
+
+	public function smush_it( $_original_url )
+	{
+		$mainframe = JFactory::getApplication();
+		$config = JFactory::getConfig();
+		define('WEBSERVICE', 'http://api.resmush.it/ws.php?img=');
+		$o = json_decode(file_get_contents(WEBSERVICE . $_original_url));
+		if(isset($o->error)){
+			echo "<pre>";
+			print_r($o);
+			die('Error');
+		}
+		$_new_path = $o->dest;
+
+		// Get unique filename before store!
+		$temp =  $config->get( 'tmp_path' );
+		$temp_file = $temp .'/'. basename( $_original_url );
+		$counter = 1;
+		while ( file_exists( $temp_file ) ) {
+			$pieces = count( explode( '.', $temp_file ) );
+			$_temp = explode( '.', $temp_file, $pieces );
+			$temp_file = str_replace( $_temp[ $pieces - 2 ] . '.' . $_temp[ $pieces - 1 ],
+					$_temp[ $pieces - 2 ] . $counter . '.' . $_temp[ $pieces - 1 ], $temp_file);
+			$counter++;
+		}
+
+		copy($_new_path, $temp_file);
+
+		return $temp_file;
 	}
 
 	/**
@@ -1290,6 +1337,10 @@ class plgSystemJomCDN extends JPlugin
 
 		if ( !$cdn_file ) {
 			$cdn_file = $absolute_path;
+		}
+		if($cdn_file != '')
+		{
+			$absolute_path = $cdn_file;
 		}
 
 		// Send file to CDN

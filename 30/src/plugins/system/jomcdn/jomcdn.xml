@@ -126,6 +126,10 @@
 			<option value="0">NO</option>
 			<option value="1">YES</option>
 		</field>
+		<field name="smushit_please" type="list" default="1" label="Use reSmush.it" description="reSmush.it is a API that provides image optimization. ">
+			<option value="0">NO</option>
+			<option value="1">YES</option>
+		</field>
 		<field name="add_expiration_time" type="list" default="0" label="Add expiration time" description="If turned on, every file that is displayed from the CDN, will have attached at the end of it the date that the file expires. This is useful if you ever change a file before it expires a browser will see this same file name as a different file because the expiration date would be different. Visually, a file would look like this: http://www.example.com/images/picture1.jpg?20100803. NOTE: The only downside to this is that some proxy servers may not cache the files.">
 			<option value="0">NO</option>
 			<option value="1">YES</option>
